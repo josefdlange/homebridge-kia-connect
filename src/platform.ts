@@ -1,4 +1,4 @@
-import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
+import {API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic, Categories} from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { Car } from './platformAccessory';
@@ -81,7 +81,7 @@ export class Platform implements DynamicPlatformPlugin {
         this.log.info('Adding new accessory:', car.vin);
 
         // create a new accessory
-        const accessory = new this.api.platformAccessory(car.vin, uuid);
+        const accessory = new this.api.platformAccessory(car.vin, uuid, Categories.OTHER);
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
