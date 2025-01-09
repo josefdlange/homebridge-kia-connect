@@ -104,13 +104,13 @@ export class Car {
 
     // Set up light sensor services for the EV Battery and Fuel levels.
     const evBattery = this.accessory.getService('evBattery') ||
-        this.accessory.addService(this.platform.Service.LightSensor, 'evBattery', this.vin);
+        this.accessory.addService(this.platform.Service.LightSensor, 'evBattery', `${this.vin}:evBattery`);
     evBattery.setCharacteristic(this.platform.Characteristic.Name, 'EV Battery');
     evBattery.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
         .onGet(this.getEvBatteryLevel.bind(this));
 
     const fuel = this.accessory.getService('fuel') ||
-        this.accessory.addService(this.platform.Service.LightSensor, 'fuel', this.vin);
+        this.accessory.addService(this.platform.Service.LightSensor, 'fuel', `${this.vin}:fuel`);
     fuel.setCharacteristic(this.platform.Characteristic.Name, 'Fuel');
     fuel.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
         .onGet(this.getFuelLevel.bind(this));
