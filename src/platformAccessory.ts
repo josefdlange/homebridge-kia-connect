@@ -66,23 +66,30 @@ export class Car {
       .onSet(this.setTargetLockState.bind(this));
 
     // Setup door contact sensors
-    this.doors = [
-      {id: 'frontLeftDoor', name: 'Front Left Door', onGet: this.getFrontLeftContactSensorState, service: null},
-      {id: 'frontRightDoor', name: 'Front Right Door', onGet: this.getFrontRightContactSensorState, service: null},
-      {id: 'backLeftDoor', name: 'Back Left Door', onGet: this.getBackLeftContactSensorState, service: null},
-      {id: 'backRightDoor', name: 'Back Right Door', onGet: this.getBackRightContactSensorState, service: null},
-      {id: 'hood', name: 'Hood', onGet: this.getHoodContactSensorState, service: null},
-      {id: 'trunk', name: 'Trunk', onGet: this.getTrunkContactSensorState, service: null},
-    ];
-    this.doors.forEach((door, i) => {
-      const x = this.accessory.getService(door.id) ||
-        this.accessory.addService(this.platform.Service.ContactSensor, door.id, `${this.vin}:${door.id}`);
-      x.setCharacteristic(this.platform.Characteristic.Name, door.name);
-      x.getCharacteristic(this.platform.Characteristic.ContactSensorState)
-        .onGet(door.onGet.bind(this));
+    // this.doors = [
+    //   {id: 'frontLeftDoor', name: 'Front Left Door', onGet: this.getFrontLeftContactSensorState, service: null},
+    //   {id: 'frontRightDoor', name: 'Front Right Door', onGet: this.getFrontRightContactSensorState, service: null},
+    //   {id: 'backLeftDoor', name: 'Back Left Door', onGet: this.getBackLeftContactSensorState, service: null},
+    //   {id: 'backRightDoor', name: 'Back Right Door', onGet: this.getBackRightContactSensorState, service: null},
+    //   {id: 'hood', name: 'Hood', onGet: this.getHoodContactSensorState, service: null},
+    //   {id: 'trunk', name: 'Trunk', onGet: this.getTrunkContactSensorState, service: null},
+    // ];
+    // this.doors.forEach((door, i) => {
+    //   const x = this.accessory.getService(door.id) ||
+    //     this.accessory.addService(this.platform.Service.ContactSensor, door.id, `${this.vin}:${door.id}`);
+    //   x.setCharacteristic(this.platform.Characteristic.Name, door.name);
+    //   x.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+    //     .onGet(door.onGet.bind(this));
+    //
+    //   this.doors[i].service = x;
+    // });
 
-      this.doors[i].service = x;
-    });
+    // Set up single contact sensor for the status of all doors.
+    const doors = this.accessory.getService('doors') ||
+      this.accessory.addService(this.platform.Service.ContactSensor, 'doors', this.vin);
+    doors.setCharacteristic(this.platform.Characteristic.Name, 'Doors');
+    doors.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+      .onGet(this.getAllDoorsContactSensorState.bind(this));
 
     // Setup battery sensor
     const battery = this.accessory.getService('battery') ||
@@ -224,6 +231,20 @@ export class Car {
     return state;
   }
 
+  private getAllDoorsContactSensorState(): CharacteristicValue {
+    let state: number;
+    if (!this.current) {
+      state = 0; // CONTACT_DETECTED
+    } else {
+      state = this.current.areDoorsClosed.backLeft && this.current.areDoorsClosed.backRight &&
+              this.current.areDoorsClosed.frontLeft && this.current.areDoorsClosed.frontRight &&
+              this.current.areDoorsClosed.hood && this.current.areDoorsClosed.trunk ? 0 : 1; // CONTACT_DETECTED : CONTACT_NOT_DETECTED
+    }
+
+    this.platform.log.info('getAllDoorsContactSensorState:', state);
+    return state;
+  }
+
   private getOccupancyDetected(): CharacteristicValue {
     if (!this.current) {
       return 0;
@@ -269,7 +290,7 @@ export class Car {
 
   private getEvBatteryLevel(): CharacteristicValue {
     if (!this.current) {
-      return 0;
+      return 0.01;
     }
 
     this.platform.log.info('getEvBatteryLevel:', this.current.evBatteryPercent);
@@ -278,7 +299,7 @@ export class Car {
 
   private getFuelLevel(): CharacteristicValue {
     if (!this.current) {
-      return 0;
+      return 0.01;
     }
 
     this.platform.log.info('getFuelLevel:', this.current.fuelPercent);
