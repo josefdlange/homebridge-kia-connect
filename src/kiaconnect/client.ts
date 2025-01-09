@@ -50,6 +50,7 @@ export class KiaConnect {
     );
 
     this.log.debug('getTransactionStatus', res.data);
+    this.log.debug('getTransactionStatus', JSON.stringify(res.data));
 
     // If the transaction is no longer being remotely executed...
     return res.data.payload.remoteStatus === 0;
