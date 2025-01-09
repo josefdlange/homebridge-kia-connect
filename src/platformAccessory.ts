@@ -95,12 +95,25 @@ export class Car {
     battery.getCharacteristic(this.platform.Characteristic.ChargingState)
       .onGet(this.getChargingState.bind(this));
 
-    // Setup external temperature sensor
-    const externalTemperature = this.accessory.getService('externalTemperature') ||
-      this.accessory.addService(this.platform.Service.TemperatureSensor, 'externalTemperature', this.vin);
-    externalTemperature.setCharacteristic(this.platform.Characteristic.Name, 'External Temperature');
-    externalTemperature.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
-      .onGet(this.getCurrentTemperature.bind(this));
+    // // Setup external temperature sensor
+    // const externalTemperature = this.accessory.getService('externalTemperature') ||
+    //   this.accessory.addService(this.platform.Service.TemperatureSensor, 'externalTemperature', this.vin);
+    // externalTemperature.setCharacteristic(this.platform.Characteristic.Name, 'External Temperature');
+    // externalTemperature.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
+    //   .onGet(this.getCurrentTemperature.bind(this));
+
+    // Set up light sensor services for the EV Battery and Fuel levels.
+    const evBattery = this.accessory.getService('evBattery') ||
+        this.accessory.addService(this.platform.Service.LightSensor, 'evBattery', this.vin);
+    evBattery.setCharacteristic(this.platform.Characteristic.Name, 'EV Battery');
+    evBattery.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
+        .onGet(this.getEvBatteryLevel.bind(this));
+
+    const fuel = this.accessory.getService('fuel') ||
+        this.accessory.addService(this.platform.Service.LightSensor, 'fuel', this.vin);
+    fuel.setCharacteristic(this.platform.Characteristic.Name, 'Fuel');
+    fuel.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
+        .onGet(this.getFuelLevel.bind(this));
 
     // Setup occupancy sensor
     const occupancy = this.accessory.getService('occupancy') ||
@@ -254,6 +267,24 @@ export class Car {
     return this.target.lockState;
   }
 
+  private getEvBatteryLevel(): CharacteristicValue {
+    if (!this.current) {
+      return 0;
+    }
+
+    this.platform.log.info('getEvBatteryLevel:', this.current.evBatteryPercent);
+    return this.current.evBatteryPercent ?? 0;
+  }
+
+  private getFuelLevel(): CharacteristicValue {
+    if (!this.current) {
+      return 0;
+    }
+
+    this.platform.log.info('getFuelLevel:', this.current.fuelPercent);
+    return this.current.fuelPercent ?? 0;
+  }
+
   private async refresh() {
     const res = await this.kiaConnect.vehicleInfo(this.vin);
     this.platform.log.debug('Vehicle info:', res);
@@ -339,6 +370,8 @@ type VehicleInfo = {
   isAirOn: boolean;
   isBatteryLow: boolean;
   isEngineOn: boolean;
+  evBatteryPercent?: number;
+  fuelPercent?: number;
 };
 
 const parseVehicleInfo = (res: VehicleInfoList): VehicleInfo => {
@@ -366,5 +399,7 @@ const parseVehicleInfo = (res: VehicleInfoList): VehicleInfo => {
     isBatteryLow: res.lastVehicleInfo.vehicleStatusRpt.vehicleStatus.batteryStatus.stateOfCharge
       < res.lastVehicleInfo.vehicleStatusRpt.vehicleStatus.batteryStatus.warning,
     isEngineOn: res.lastVehicleInfo.vehicleStatusRpt.vehicleStatus.engine,
+    evBatteryPercent: res.lastVehicleInfo.vehicleStatusRpt.vehicleStatus.evStatus.batteryStatus,
+    fuelPercent: res.lastVehicleInfo.vehicleStatusRpt.vehicleStatus.fuelLevel
   };
 };

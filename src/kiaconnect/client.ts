@@ -50,7 +50,6 @@ export class KiaConnect {
     );
 
     this.log.debug('getTransactionStatus', res.data);
-    this.log.debug('getTransactionStatus2', JSON.stringify(res.data));
 
     // If the transaction is no longer being remotely executed...
     return res.data.payload.remoteStatus === 0;
@@ -203,7 +202,6 @@ export class KiaConnect {
     );
 
     this.log.debug('vehicleInfo', res.data);
-    this.log.debug('vehicleInfo', JSON.stringify(res.data));
 
     const data = res.data as VehicleInfoResponse;
     const info = data.payload.vehicleInfoList.find((info) => info.vehicleConfig.vehicleDetail.vehicle.vin === vin);

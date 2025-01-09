@@ -602,7 +602,13 @@ export interface VehicleStatus {
     valetParkingMode: number;
     rsaStatus: number;
     lightStatus: LightStatus;
+    evStatus: EVStatus;
   }
+
+export interface EVStatus {
+    batteryCharge: boolean;
+    batteryStatus: number;
+}
 
 export interface Climate {
     airCtrl: boolean;
