@@ -22,6 +22,10 @@ type Target = {
 export class Car {
   private current: VehicleInfo | null = null;
   // private doors: Door[];
+  private battery: Service;
+  private evBattery: Service;
+  private fuel: Service;
+  private doors: Service;
   private engine: Service;
   private lock: Service;
   private target: Target;
@@ -85,21 +89,21 @@ export class Car {
     // });
 
     // Set up single contact sensor for the status of all doors.
-    const doors = this.accessory.getService('doors') ||
+    this.doors = this.accessory.getService('doors') ||
       this.accessory.addService(this.platform.Service.ContactSensor, 'doors', this.vin);
-    doors.setCharacteristic(this.platform.Characteristic.Name, 'Doors');
-    doors.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+    this.doors.setCharacteristic(this.platform.Characteristic.Name, 'Doors');
+    this.doors.getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .onGet(this.getAllDoorsContactSensorState.bind(this));
 
     // Setup battery sensor
-    const battery = this.accessory.getService('battery') ||
+    this.battery = this.accessory.getService('battery') ||
       this.accessory.addService(this.platform.Service.Battery, 'battery', this.vin);
-    battery.setCharacteristic(this.platform.Characteristic.Name, 'Battery');
-    battery.getCharacteristic(this.platform.Characteristic.BatteryLevel)
+    this.battery.setCharacteristic(this.platform.Characteristic.Name, 'Battery');
+    this.battery.getCharacteristic(this.platform.Characteristic.BatteryLevel)
       .onGet(this.getBatteryLevel.bind(this));
-    battery.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
+    this.battery.getCharacteristic(this.platform.Characteristic.StatusLowBattery)
       .onGet(this.getStatusBatteryLow.bind(this));
-    battery.getCharacteristic(this.platform.Characteristic.ChargingState)
+    this.battery.getCharacteristic(this.platform.Characteristic.ChargingState)
       .onGet(this.getChargingState.bind(this));
 
     // // Setup external temperature sensor
@@ -110,16 +114,16 @@ export class Car {
     //   .onGet(this.getCurrentTemperature.bind(this));
 
     // Set up light sensor services for the EV Battery and Fuel levels.
-    const evBattery = this.accessory.getService('evBattery') ||
+    this.evBattery = this.accessory.getService('evBattery') ||
         this.accessory.addService(this.platform.Service.LightSensor, 'evBattery', `${this.vin}:evBattery`);
-    evBattery.setCharacteristic(this.platform.Characteristic.Name, 'EV Battery');
-    evBattery.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
+    this.evBattery.setCharacteristic(this.platform.Characteristic.Name, 'EV Battery');
+    this.evBattery.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
         .onGet(this.getEvBatteryLevel.bind(this));
 
-    const fuel = this.accessory.getService('fuel') ||
+    this.fuel = this.accessory.getService('fuel') ||
         this.accessory.addService(this.platform.Service.LightSensor, 'fuel', `${this.vin}:fuel`);
-    fuel.setCharacteristic(this.platform.Characteristic.Name, 'Fuel');
-    fuel.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
+    this.fuel.setCharacteristic(this.platform.Characteristic.Name, 'Fuel');
+    this.fuel.getCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel)
         .onGet(this.getFuelLevel.bind(this));
 
     // Setup occupancy sensor
@@ -325,9 +329,19 @@ export class Car {
     this.lock.updateCharacteristic(this.platform.Characteristic.LockTargetState, this.getTargetLockState());
 
     // Set the door contact sensors
-    this.doors.forEach(door => {
-      door.service?.updateCharacteristic(this.platform.Characteristic.ContactSensorState, door.onGet.bind(this)());
-    });
+    // this.doors.forEach(door => {
+    //   door.service?.updateCharacteristic(this.platform.Characteristic.ContactSensorState, door.onGet.bind(this)());
+    // });
+    this.doors.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.getAllDoorsContactSensorState());
+
+    this.battery.updateCharacteristic(this.platform.Characteristic.BatteryLevel, this.getBatteryLevel());
+    this.battery.updateCharacteristic(this.platform.Characteristic.StatusLowBattery, this.getStatusBatteryLow());
+    this.battery.updateCharacteristic(this.platform.Characteristic.ChargingState, this.getChargingState());
+
+    this.evBattery.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, this.getEvBatteryLevel());
+    this.fuel.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, this.getFuelLevel());
+
+
   }
 
   private async setOn(value: CharacteristicValue) {
