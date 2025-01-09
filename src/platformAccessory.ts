@@ -21,7 +21,7 @@ type Target = {
  */
 export class Car {
   private current: VehicleInfo | null = null;
-  private doors: Door[];
+  // private doors: Door[];
   private engine: Service;
   private lock: Service;
   private target: Target;
